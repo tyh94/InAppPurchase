@@ -23,6 +23,7 @@ import SwiftUI
 /// ```
 public struct PremiumView: View {
     @Environment(PremiumService.self) private var premiumService
+    @Environment(\.dismiss) private var dismiss
     
     private let title: String
     private let subtitle: String
@@ -48,6 +49,11 @@ public struct PremiumView: View {
         }
         .listStyle(.insetGrouped)
         .navigationBarTitleDisplayMode(.large)
+        .onChange(of: premiumService.isPremium) { oldValue, newValue in
+            if newValue {
+                dismiss()
+            }
+        }
     }
 
     // MARK: - Header

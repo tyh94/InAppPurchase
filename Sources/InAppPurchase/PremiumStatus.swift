@@ -11,13 +11,18 @@ public struct PremiumStatus: Codable, Equatable {
     public let isLifetime: Bool
     public let expirationDate: Date?
     
-    public init(isLifetime: Bool = false, expirationDate: Date? = nil) {
+    public init(
+        isLifetime: Bool = false,
+        expirationDate: Date? = nil
+    ) {
         self.isLifetime = isLifetime
         self.expirationDate = expirationDate
     }
     
     public var isPremium: Bool {
-        if isLifetime { return true }
+        if isLifetime {
+            return true
+        }
         if let expirationDate, expirationDate > Date() {
             return true
         }
