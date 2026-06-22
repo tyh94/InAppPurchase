@@ -2,6 +2,7 @@
   "sourceLanguage" : "en",
   "strings" : {
     "premium.nav.title" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12,7 +13,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Premium"
+            "value" : "Премиум"
           }
         }
       }

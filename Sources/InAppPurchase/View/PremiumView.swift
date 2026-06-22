@@ -47,7 +47,6 @@ public struct PremiumView: View {
             actionSection
         }
         .listStyle(.insetGrouped)
-        .navigationTitle(Text("premium.nav.title", bundle: .module))
         .navigationBarTitleDisplayMode(.large)
     }
 
@@ -127,7 +126,6 @@ public struct PremiumView: View {
 
     @ViewBuilder
     private var buySection: some View {
-        // Кнопка покупки
         Section {
             if premiumService.isLoading {
                 HStack {
@@ -135,12 +133,15 @@ public struct PremiumView: View {
                     ProgressView()
                     Spacer()
                 }
-            } else if let product = premiumService.products.first {
-                productRow(product)
+            } else if !premiumService.products.isEmpty {
+                ForEach(premiumService.products) { product in
+                    productRow(product)
+                }
             } else {
-                // Продукты ещё не загружены или ошибка
                 Button {
-                    Task { await premiumService.start() }
+                    Task {
+                        await premiumService.start()
+                    }
                 } label: {
                     Label(
                         String(localized: "premium.retry", bundle: .module),
@@ -151,10 +152,11 @@ public struct PremiumView: View {
             }
         }
 
-        // Восстановление — обязательно по правилам App Store
         Section {
             Button {
-                Task { await premiumService.restorePurchases() }
+                Task {
+                    await premiumService.restorePurchases()
+                }
             } label: {
                 Text("premium.restore", bundle: .module)
                     .frame(maxWidth: .infinity)
@@ -166,7 +168,9 @@ public struct PremiumView: View {
 
     private func productRow(_ product: Product) -> some View {
         Button {
-            Task { await premiumService.purchase(product) }
+            Task {
+                await premiumService.purchase(product)
+            }
         } label: {
             HStack {
                 Text(product.displayName)
