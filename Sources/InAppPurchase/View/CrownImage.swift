@@ -8,11 +8,11 @@
 import SwiftUI
 
 public struct CrownImage: View {
-    @EnvironmentObject var premium: PremiumService
+    @Environment(PremiumService.self) private var premium
     @State private var animateGlow = false
-    
+
     public init() {}
-    
+
     public var body: some View {
         Image(systemName: "crown.fill")
             .font(.title2)
@@ -28,7 +28,7 @@ public struct CrownImage: View {
             .onDisappear {
                 animateGlow = false
             }
-            .onChange(of: premium.isPremium) { isPremium in
+            .onChange(of: premium.isPremium) { _, isPremium in
                 if isPremium {
                     animateGlow = false
                 }
@@ -36,10 +36,9 @@ public struct CrownImage: View {
     }
 }
 
-@available(iOS 17.0, *)
 #Preview {
     CrownImage()
-        .environmentObject(PremiumService(
+        .environment(PremiumService(
             productIDs: [],
             storage: KeyValueStorageMock(objects: [
                 "subscription": try! JSONEncoder().encode(PremiumStatus(isLifetime: false)),

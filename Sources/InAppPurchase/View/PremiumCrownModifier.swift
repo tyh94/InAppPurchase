@@ -26,7 +26,7 @@ extension View {
 }
 
 private struct PremiumCrownModifier: ViewModifier {
-    @EnvironmentObject var premium: PremiumService
+    @Environment(PremiumService.self) private var premium
     var size: CGFloat
     var offsetX: CGFloat
     var offsetY: CGFloat
@@ -46,7 +46,6 @@ private struct PremiumCrownModifier: ViewModifier {
     }
 }
 
-@available(iOS 17.0, *)
 #Preview {
     Image(systemName: "mic.fill")
         .font(.title)
@@ -55,7 +54,7 @@ private struct PremiumCrownModifier: ViewModifier {
         .foregroundColor(.white)
         .shadow(radius: 5)
         .premiumCrown()
-        .environmentObject(PremiumService(
+        .environment(PremiumService(
             productIDs: [],
             storage: KeyValueStorageMock(objects: [
                 "subscription": try! JSONEncoder().encode(PremiumStatus(isLifetime: false)),
@@ -70,7 +69,7 @@ private struct PremiumCrownModifier: ViewModifier {
         .foregroundColor(.white)
         .shadow(radius: 5)
         .premiumCrown(size: 20, offsetX: -10, offsetY: -10)
-        .environmentObject(PremiumService(
+        .environment(PremiumService(
             productIDs: [],
             storage: KeyValueStorageMock(objects: [
                 "subscription": try! JSONEncoder().encode(PremiumStatus(isLifetime: true)),

@@ -7,20 +7,25 @@
 
 import Combine
 import Foundation
+import Observation
 import StoreKit
 
 @MainActor
-public final class PremiumService: ObservableObject {
+@Observable
+public final class PremiumService {
     private let purchaseManager: PurchaseManaging
     private let storage: KeyValueStorage
     private let storageKey: String
     private let logger: Logger?
-    
+
     private var expirationTask: Task<Void, Never>?
-    
-    @Published public private(set) var isPremium: Bool = false
-    @Published public private(set) var premiumStatus: PremiumStatus = .init()
-    
+
+    public private(set) var isPremium: Bool = false
+    public private(set) var premiumStatus: PremiumStatus = .init()
+    public private(set) var products: [Product] = []
+    public private(set) var isLoading: Bool = false
+    public private(set) var purchaseError: Error? = nil
+
     public convenience init(
         productIDs: [String],
         storage: KeyValueStorage,
@@ -37,7 +42,7 @@ public final class PremiumService: ObservableObject {
             logger: logger
         )
     }
-    
+
     public init(
         purchaseManager: PurchaseManaging,
         storage: KeyValueStorage,
@@ -48,53 +53,50 @@ public final class PremiumService: ObservableObject {
         self.storage = storage
         self.storageKey = storageKey
         self.logger = logger
-        
+
         premiumStatus = (try? storage.object(forKey: storageKey)) ?? .init()
         isPremium = premiumStatus.isPremium
     }
-    
-    deinit {
-        expirationTask?.cancel()
-    }
-    
+
     public func start() async {
+        isLoading = true
+        purchaseError = nil
         await purchaseManager.fetchProducts()
+        products = purchaseManager.products
         await purchaseManager.updatePurchasedProducts()
         await updatePremiumStatus()
+        isLoading = false
     }
-    
+
     public func purchase(_ product: Product) async {
+        isLoading = true
+        purchaseError = nil
         await purchaseManager.purchase(product)
         await updatePremiumStatus()
+        isLoading = false
     }
-    
+
     public func restorePurchases() async {
+        isLoading = true
+        purchaseError = nil
         await purchaseManager.restorePurchases()
+        products = purchaseManager.products
         await updatePremiumStatus()
+        isLoading = false
     }
-    
-    public var products: [Product] {
-        purchaseManager.products
-    }
-    
+
     #if DEBUG
     public func debugReset() {
-        // 1. Чистим локальное хранилище
         try? storage.removeObject(forKey: storageKey)
-        
-        // 2. Сбрасываем PremiumStatus
         let empty = PremiumStatus()
         premiumStatus = empty
         isPremium = false
-        
-        // 3. Останавливаем задачу истечения
         expirationTask?.cancel()
         expirationTask = nil
-        
         logger?.debug("🔧 PremiumService debugReset(): статус сброшен")
     }
     #endif
-    
+
     private func updatePremiumStatus() async {
         var status = PremiumStatus()
 
@@ -104,7 +106,6 @@ public final class PremiumService: ObservableObject {
                 case .nonConsumable:
                     status = PremiumStatus(isLifetime: true)
                 case .autoRenewable:
-                    // Достаём датy истечения транзакции
                     if let t = await Transaction.latest(for: product.id),
                        case .verified(let transaction) = t,
                        let expiration = transaction.expirationDate {
@@ -117,41 +118,40 @@ public final class PremiumService: ObservableObject {
         }
 
         try? storage.set(status, forKey: storageKey)
-
-        await MainActor.run {
-            premiumStatus = status
-            isPremium = status.isPremium
-            scheduleExpirationCheck(for: status)
-        }
+        premiumStatus = status
+        isPremium = status.isPremium
+        scheduleExpirationCheck(for: status)
     }
-    
+
     private func scheduleExpirationCheck(for status: PremiumStatus) {
         expirationTask?.cancel()
-        
-        guard let expirationDate = status.expirationDate else {
-            return
-        }
-        
-        // пересчитываем интервал заново
+        guard let expirationDate = status.expirationDate else { return }
         let interval = expirationDate.timeIntervalSinceNow
-        
-        // если дата странная / отрицательная — не считаем что подписка истекла
-        guard interval > 1 else {
-            // StoreKit сам пришлёт событие об истечении
-            return
-        }
-        
+        guard interval > 1 else { return }
+
         expirationTask = Task { [weak self] in
             guard let self else { return }
-            
             do {
                 try await Task.sleep(for: .seconds(interval))
             } catch {
-                return // cancelled
+                return
             }
-            
-            // после таймера — проверяем ещё раз через StoreKit, а не сами сбрасываем
             await self.updatePremiumStatus()
         }
+    }
+}
+
+extension PremiumService {
+    public static func preview(isPremium: Bool = false) -> PremiumService {
+        let storage = KeyValueStorageMock(objects: isPremium
+            ? ["premiumStatus": (try? JSONEncoder().encode(PremiumStatus(isLifetime: true))) ?? Data()]
+            : [:]
+        )
+        return PremiumService(
+            purchaseManager: PurchaseManagerMock(simulatePurchased: isPremium),
+            storage: storage,
+            storageKey: "premiumStatus",
+            logger: nil
+        )
     }
 }
