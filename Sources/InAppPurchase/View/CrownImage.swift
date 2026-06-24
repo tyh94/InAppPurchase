@@ -38,11 +38,5 @@ public struct CrownImage: View {
 
 #Preview {
     CrownImage()
-        .environment(PremiumService(
-            productIDs: [],
-            storage: KeyValueStorageMock(objects: [
-                "subscription": try! JSONEncoder().encode(PremiumStatus(isLifetime: false)),
-            ]),
-            storageKey: "subscription"
-        ))
+        .environment(PremiumService.preview())
 }

@@ -54,13 +54,7 @@ private struct PremiumCrownModifier: ViewModifier {
         .foregroundColor(.white)
         .shadow(radius: 5)
         .premiumCrown()
-        .environment(PremiumService(
-            productIDs: [],
-            storage: KeyValueStorageMock(objects: [
-                "subscription": try! JSONEncoder().encode(PremiumStatus(isLifetime: false)),
-            ]),
-            storageKey: "subscription"
-        ))
+        .environment(PremiumService.preview(isPremium: true))
     
     Image(systemName: "mic.fill")
         .font(.title)
@@ -69,11 +63,5 @@ private struct PremiumCrownModifier: ViewModifier {
         .foregroundColor(.white)
         .shadow(radius: 5)
         .premiumCrown(size: 20, offsetX: -10, offsetY: -10)
-        .environment(PremiumService(
-            productIDs: [],
-            storage: KeyValueStorageMock(objects: [
-                "subscription": try! JSONEncoder().encode(PremiumStatus(isLifetime: true)),
-            ]),
-            storageKey: "subscription"
-        ))
+        .environment(PremiumService.preview(isPremium: false))
 }

@@ -13,11 +13,17 @@ let package = Package(
             name: "InAppPurchase",
             targets: ["InAppPurchase"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/tyh94/Storage.git", from: "1.0.2"),
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "InAppPurchase",
+            dependencies: [
+                "Storage"
+            ],
             resources: [
                 .process("Resources")
             ]
