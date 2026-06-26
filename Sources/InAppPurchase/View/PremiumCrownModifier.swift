@@ -9,6 +9,7 @@ import SwiftUI
 
 extension View {
     public func premiumCrown(
+        isActive: Bool = true,
         size: CGFloat = 16,
         offsetX: CGFloat = -8,
         offsetY: CGFloat = -8,
@@ -16,6 +17,7 @@ extension View {
     ) -> some View {
         self.modifier(
             PremiumCrownModifier(
+                isActive: isActive,
                 size: size,
                 offsetX: offsetX,
                 offsetY: offsetY,
@@ -27,15 +29,16 @@ extension View {
 
 private struct PremiumCrownModifier: ViewModifier {
     @Environment(PremiumService.self) private var premium
+    var isActive: Bool
     var size: CGFloat
     var offsetX: CGFloat
     var offsetY: CGFloat
     var rotation: Double
-    
+
     func body(content: Content) -> some View {
         content
             .overlay(alignment: .topLeading) {
-                if !premium.isPremium {
+                if isActive, !premium.isPremium {
                     CrownImage()
                         .padding(size * 0.2)
                         .rotationEffect(.degrees(rotation))
