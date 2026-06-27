@@ -14,7 +14,7 @@ let package = Package(
             targets: ["InAppPurchase"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/tyh94/Storage.git", from: "1.0.3"),
+        .package(url: "https://github.com/tyh94/Storage.git", from: "1.0.4"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
